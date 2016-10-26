@@ -1,0 +1,46 @@
+---
+name: Gogs - Drone stack
+description: Gogs, Drone stack.
+keywords: gogs,drone
+type: Default
+documentation: |-
+  Add following folders on host :
+
+  - /var/dockerdata/gogs/data
+  - /var/dockerdata/drone
+
+  chmod as required
+
+  In gogs setup select sqlite as database
+images:
+- name: gogs
+  source: gogs/gogs:latest
+  type: Default
+  ports:
+  - host_port: '3010'
+    container_port: '3000'
+  - host_port: '10022'
+    container_port: '22'
+  volumes:
+  - host_path: "/var/dockerdata/gogs/data"
+    container_path: "/data"
+- name: drone
+  source: drone/drone:0.4
+  type: Default
+  ports:
+  - host_port: '80'
+    container_port: '8000'
+    proto: TCP
+  links:
+  - service: gogs
+    alias: gogs
+  environment:
+  - variable: REMOTE_DRIVER
+    value: gogs
+  - variable: REMOTE_CONFIG
+    value: http://gogs:3000?open=true
+  volumes:
+  - host_path: "/var/run/docker.sock"
+    container_path: "/var/run/docker.sock"
+  - host_path: "/var/dockerdata/drone"
+    container_path: "/var/lib/drone"
